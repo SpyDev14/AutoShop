@@ -5,13 +5,63 @@ description = "..."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "django>=5.2.6",
-    "django-environ>=0.12.0",
+    "django>=6.1.3",
+    "django-environ>=0.14.0",
     "django-cleanup>=9.0.0",
-    "django-admin-registrar>=0.3.0",
+    "django-admin-registrar>=0.3.0dev2",
+    "django-debug-toolbar>=8.0.0",
+    "django-solo>=2.7.0",
 ]
 
 [dependency-groups]
 dev = [
     "ruff>=0.15.20",
 ]
+
+# Временно (это мой пакет, хочу отладить ещё не вышедший функционал)
+[tool.uv.sources]
+django-admin-registrar = { index = "test" }
+
+[[tool.uv.index]]
+name = "test"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+exclude = [".venv", "__pycache__"]
+
+[tool.ruff.lint]
+# Включаем базовые правила плюс Django-специфичные.
+# DJ — это flake8-django, который ловит типичные ошибки в моделях и вьюхах.
+# E, F, W — базовые проверки pycodestyle и pyflakes.
+# I — сортировка импортов.
+# UP — предложения по обновлению синтаксиса (pyupgrade).
+# B — поиск потенциальных багов (flake8-bugbear).
+extend-select = [
+    "DJ",  # Django-specific rules
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+
+# Игнорируем проблемы в автогенерируемых файлах и тестах.
+[tool.ruff.lint.per-file-ignores]
+# Миграции генерируются Django, их бессмысленно стилистически править.
+"**/migrations/*.py" = ["E501", "RUF012"]  # E501: длинные строки, RUF012: мутабельные дефолты
+# В тестах часто нужны "магические" числа и разрешён assert.
+"**/tests/*.py" = ["S101", "ANN"]
+"**/test_*.py" = ["S101"] # S101 — использование assert
+
+
+[tool.ruff.format]
+# Настройки форматтера (аналог black)
+quote-style = "double"        # Использовать двойные кавычки
+indent-style = "space"        # Отступы пробелами
+line-ending = "auto"          # Автоматически определять конец строки
+skip-magic-trailing-comma = false # Не пропускать "магические" запятые

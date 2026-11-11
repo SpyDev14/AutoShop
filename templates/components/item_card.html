@@ -1,0 +1,10 @@
+<a class="button item-card" href="{{obj.get_absolute_url}}">
+    {% if obj.get_image_url %}
+        <img src="{{obj.get_image_url}}" alt="{{object.get_default_alt_text}}">
+    {% endif %}
+    <div class="body">
+        {% block body %}
+            {{obj.name}}
+        {% endblock %}
+    </div>
+</a>

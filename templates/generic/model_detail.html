@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if object.next_object %}
+{% gendif %}
+<div class="body">
+    <h1>{{ page_info.get_h1 }}</h1>
+    {% if object.get_image_url %}
+        {% include 'components/images_block.html' %}
+    {% endif %}
+
+    <div style="padding-block: 1rem;">
+        {% include 'components/generic_description_block.html' %}
+    </div>
+
+    {% block special_content %}
+    {% endblock %}
+</div>
+
+<style>
+    main {
+
+        .body {
+            width: 45vw;
+            margin-inline: auto;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem;
+
+            .button {
+                border-radius: var(--elements-border-radius);
+            }
+        }
+    }
+</style>
+{% endblock %}

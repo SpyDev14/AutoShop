@@ -1,0 +1,13 @@
+<div class="images-block"> <!-- TODO: определить источник alt -->
+    <img src="{{object.get_image_url}}" alt="{{object.get_default_alt_text}}">
+
+    {% with images=images|default:object|getattr:"images"|getattr:"all" %}
+        {% if images %}
+            <div class="subimages-row">
+                {% for image in images %}
+                    <img src="{{image.get_url}}" alt="{% image_alt_text %}">
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</div>

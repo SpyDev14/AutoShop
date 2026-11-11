@@ -1,0 +1,721 @@
+{% load static %}
+{% load debug_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+    {% if not page_info and settings.DEBUG %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() { alert(
+                'Ошибка! page_info отсутствует в контексте! ' +
+                'Бекендеры, проверьте что используете правильный View, ' +
+                'добавляющий page_info в контекст!'
+            )}, 200);
+        });
+    </script>
+    {% endif %}
+
+    {% block html_title_override %}
+        <!-- page_info будет всегда, но если был использован неправильный view, пускай будет хоть какой-то -->
+        <title>{{ page_info.get_html_title|default:global.site_settings.site_name }}</title>
+    {% endblock %}
+
+    <meta name="description" content="{{page_info.get_html_description}}">
+    <meta name="og:type" content="{{page_info.og_type}}">
+    {% block custom_og_tags %}{% endblock %}
+    <meta name="og:title" content="{{page_info.og_title}}">
+    {% if page_info.og_description %}
+        <meta name="og:description" content="{{page_info.og_description}}">{% endif %}
+    {% if page_info.og_image_url or global.site_settings.favicon %}
+        <meta name="og:image" content="{{page_info.og_image_url|default:global.site_settings.favicon.url}}">
+    {% endif %}
+    <meta name="og:site_name" content="{{site_settings.site_name}}">
+    <meta name="og:url" content="{{page_info.get_absolute_url}}">
+    <link rel="cannonical" href="{{page_info.get_absolute_url}}">
+
+    <meta charset="utf-8">
+    {% with microdata=page_info.get_microdata_html_block %}
+        {% if microdata %}
+            {{microdata|safe}}
+        {% endif %}
+    {% endwith %}
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    {{ global.site_settings.head_addition }}
+</head>
+<style>
+    /* * { margin: 0; } */
+    :root {
+        font-family: consolas;
+        --font-family-code-alt: 'Roboto Mono', 'JetBrains Mono', 'Cascadia Code';
+        --global-background-color: #050505;
+        background-color: var(--global-background-color);
+        color: var(--primary-text-color);
+
+        --primary-text-color: white;
+        --secondary-text-color: gray;
+        --secondary-text-color-hover: rgba(128, 128, 128, 0.8);
+        --elements-border-radius: 0.45rem;
+        --elements-border: 1px solid var(--lighting-2);
+        /* --elements-border-radius: 0; */
+
+        --lighting-1: #FFFFFF08;
+        --lighting-1-5: #FFFFFF0F;
+        --lighting-2: #FFFFFF10;
+        --lighting-3: #FFFFFF18;
+        --lighting-4: #FFFFFF20;
+        --lighting-5: #FFFFFF28;
+    }
+    a {color: rgb(80, 156, 255); text-decoration: none;}
+    h1, h2, h3, h4, h5, h6 {font-family: var(--font-family-code-alt);}
+    code {
+        background-color: var(--lighting-1-5);
+        font-size: 0.8rem;
+        padding-block: 0.1rem;
+        padding-inline: 0.25rem;
+        border-radius: calc(var(--elements-border-radius) / 2);
+    }
+
+    body {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        margin: 0;
+    }
+
+    img { user-select: none; }
+
+    .content-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1; /* Занимает все оставшееся пространство */
+    }
+
+    .main-title {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    .dim { color: var(--secondary-text-color); }
+    .breadcrumbs,
+    .navigation-bar {
+        font-family: 'Roboto Mono', 'JetBrains Mono', 'Cascadia Code';
+        color: var(--secondary-text-color);
+
+        a { color: var(--secondary-text-color); }
+        a:hover { color: var(--secondary-text-color-hover); }
+    }
+    .navigation-bar {
+        position: absolute;
+        x: 0;
+        y: 0;
+        display: flex;
+        flex-grow: 0;
+        flex-shrink: 1;
+        min-width: 0;
+        border-right: var(--elements-border);
+        border-bottom: var(--elements-border);
+        border-bottom-right-radius: var(--elements-border-radius);
+
+        a {
+            padding: 0.5rem;
+
+            &:first-child {
+                border-left: var(--elements-border);
+            }
+        }
+    }
+
+    header {
+        /* Хедер растягивается на всю ширину */
+        flex: 0 0 auto; /* Но не растягивается, не сжимается, авто высота */
+        padding: 0.5rem;
+        --border: 1px solid var(--lighting-2);
+        border-bottom: var(--border);
+        min-height: 0; /* Ключевое свойство для работы скролла в flex-контейнере */
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+        --border: 1px solid var(--lighting-2);
+
+        th, td {
+            border-bottom: var(--border);
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {font-weight: bold;}
+        td:empty::before {content: "—";}
+
+        &.full {
+            th {background-color: var(--lighting-2); }
+            th, td { border: var(--border); }
+        }
+    }
+
+    button, input, textarea, select, option {
+        font-family: inherit;
+        font-weight: inherit;
+        font-size: inherit;
+        color: inherit;
+    }
+
+    input, textarea, select, option {
+        border-radius: var(--elements-border-radius);
+        background-color: var(--lighting-1);
+        border: 1px solid var(--lighting-1);
+    }
+    select {
+        padding-inline: 0.5rem;
+        padding-block: 0.25rem;
+    }
+    option {
+        background-color: var(--global-background-color);
+        border-radius: 0.5rem;
+    }
+
+    form {
+        flex-direction: column;
+        display: flex;
+        align-items: center;
+        background-color: var(--lighting-1);
+        border: 1px solid var(--lighting-2);
+        border-radius: calc(var(--elements-border-radius) * 2);
+        padding: 0.8rem;
+        gap: 0.5rem;
+
+        label {
+            /* font-family: var(--font-family-code-alt); */
+            font-weight: 400;
+        }
+
+        button {
+            border-radius: var(--elements-border-radius);
+            padding-inline: 1rem;
+        }
+        table {
+            margin: 0;
+            td, th {
+                border: none;
+                padding: 0.25rem;
+            }
+            input, textarea, select {
+                width: 100%;
+                resize: none;
+            }
+        }
+
+        &.hidden {
+            background: none;
+            border: none;
+            padding: 0;
+        }
+    }
+
+    .burger {
+        background-color: var(--lighting-1);
+        border-right: 1px solid var(--lighting-1);
+        min-width: 16rem;
+        padding: 1rem;
+        overflow-y: auto; /* На случай, если меню тоже будет длинным */
+        display: flex;
+        flex-direction: column;
+        justify-content: stretch;
+
+        .pages-list {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            overflow-y: auto;
+            gap: 0.5rem;
+
+            .body {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+
+
+                .button {
+                    .onhover { display: none; }
+                    &:hover .onhover { display: initial; }
+
+                    &:first-child {
+                        border-top-left-radius: var(--elements-border-radius);
+                        border-top-right-radius: var(--elements-border-radius);
+                    }
+
+                    &:last-child {
+                        border-bottom-left-radius: var(--elements-border-radius);
+                        border-bottom-right-radius: var(--elements-border-radius);
+                    }
+                }
+            }
+        }
+    }
+
+    main, .debug-mode-content-block {
+        display: flex;
+        flex-direction: column;
+        flex: 1; /* Занимает всё доступное пространство */
+        padding: 1rem;
+        overflow-y: auto; /* auto вместо scroll - скролл появится только когда нужно */
+        min-height: 0; /* Также важно для flex-элементов */
+    }
+    main {
+        padding-bottom: 12rem;
+    }
+
+    ::-webkit-scrollbar {width: 0.35rem; height: 0.35rem;}
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--lighting-2);
+        border-radius: min(var(--elements-border-radius, 0) * 999, 100vh);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {background-color: var(--lighting-3);}
+    ::-webkit-scrollbar-thumb:active {background-color: var(--lighting-4);}
+
+    .button, button {
+        background-color: var(--lighting-1);
+        --border-color: var(--lighting-1);
+        border: 1px solid var(--lighting-1);
+        --padding: 0.5rem;
+        padding: var(--padding);
+        user-select: none;
+        text-align: center;
+        cursor: pointer;
+
+        &:hover {background-color: var(--lighting-2);}
+
+        &.current {
+            background-color: var(--lighting-3);
+            box-shadow: inset 0 0 0 1px var(--border-color);
+
+            &:hover {background-color: var(--lighting-4);}
+            &:active {background-color: var(--lighting-5);}
+        }
+    }
+
+    a:not(.dim) {
+        &.button, &.button:hover, &.button:active, &.button:visited {
+            color: var(--primary-text-color);
+        }
+    }
+
+    .button:active, button:active,
+    .switch input:checked + .button {
+        background-color: var(--lighting-3);
+    }
+
+    .switch {
+        position: relative;
+        display: inherit;
+        input {display: none;}
+        .button {flex: 1;}
+
+        .toggle-marker.selected { display: none; }
+        .toggle-marker.unselected { display: inline; }
+        input:checked + .button {
+            border-color: var(--lighting-4);
+            box-shadow: inset 0 0 0 1px var(--lighting-4);
+            .toggle-marker.selected {display: inline;}
+            .toggle-marker.unselected {display: none;}
+        }
+    }
+
+    .oneline-text {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    .underlined-on-hover:hover {
+        text-decoration: underline;
+    }
+
+    details summary {user-select: none;}
+
+    .formatted-text-block {
+        a:hover { text-decoration: underline; }
+        p {margin-block: 1rem;}
+    }
+
+    .hideOnDebugMode.onActive {display: none;}
+    .showOnDebugMode.onUnactive {display: none;}
+
+    .list-container.grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+        gap: 0.5rem;
+    }
+    .list-container.flex {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+
+        .item-card {
+            width: 12rem;
+            flex: 0 0 12rem;
+
+            .body {
+                width: 12rem;
+            }
+        }
+    }
+
+    .item-card {
+        height: 16rem;
+        background-color: rgba(0, 0, 0, 0);
+        border-color: var(--lighting-2);
+        border-radius: var(--elements-border-radius);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 0;
+
+        img {
+            width: 100%;
+            height: 70%;
+            object-fit: cover;
+        }
+        .body {
+            padding: var(--padding);
+            flex: 1 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /* word-wrap: break; */
+            text-overflow: ellipsis;
+        }
+    }
+
+    .images-block {
+        display: flex;
+        flex-direction: column;
+        padding-block: 0.5rem;
+
+        img {
+            border: 1px solid var(--lighting-2);
+            border-radius: var(--elements-border-radius);
+            object-fit: cover;
+        }
+
+        & > img:first-of-type {
+            aspect-ratio: 2;
+            width: 100%;
+        }
+
+        .subimages-row {
+            padding-block: 0.5rem;
+            display: flex;
+            align-items: stretch;
+            overflow: auto;
+            gap: 0.5rem;
+            height: 8rem;
+
+            & > * {
+                flex: 0 0 12rem;
+            }
+        }
+    }
+
+    .facility-item-card {
+        border-radius: var(--elements-border-radius);
+        height: 18rem;
+        max-width: 12rem;
+        display: flex;
+        flex-direction: column;
+        background-color: rgba(0, 0, 0, 0);
+        --border-color: var(--lighting-2);
+        border-color: var(--border-color);
+        padding: 0;
+        overflow: hidden;
+
+        img {
+            object-fit: cover;
+        }
+        .main-image {
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .body {
+            max-width: 100%;
+            padding: 0.5rem;
+            /* text-wrap-style: balance; */
+            word-break: break-all;
+            display: flex;
+            flex-direction: column;
+
+            & > * {
+                &:not(:last-child) {
+                    border-bottom: 1px solid var(--lighting-1);
+                }
+
+                --padding: 0.125rem;
+                &:not(:last-child):not(:first-child) {
+                    padding-block: var(--padding);
+                }
+                &:first-child {
+                    padding-bottom: var(--padding);
+                }
+                &:last-child {
+                    padding-top: 0.5rem;
+                }
+
+            }
+
+            .product-icons {
+                display: flex;
+                flex-wrap: wrap;
+                flex: 0 1 0%;
+                justify-content: center;
+                gap: 0.5rem;
+
+                img {
+                    border-radius: var(--elements-border-radius);
+                    width: 2rem;
+                    aspect-ratio: 1;
+                    flex: 0 0 2rem;
+                }
+            }
+        }
+    }
+
+    /* shortcut */
+    .sc-flex-column {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+<body>
+    <div class="burger">
+        <h1 class="main-title" style="margin-bottom: 2rem;">
+            Debug UI v0.2
+        </h1>
+
+        <div class="sc-flex-column" style="gap: 0.5rem;">
+            <div class="sc-flex-column" style="gap: 0.5rem;">
+                <a
+                    class="button"
+                    href="{{page_info.get_admin_url}}"
+                    style="
+                        border-top-left-radius: var(--elements-border-radius);
+                        border-top-right-radius: var(--elements-border-radius);
+                    ">Смотреть в админке</a>
+                <label class="switch">
+                    <input type="checkbox" id="enableDebugModeCheckbox">
+                    <span class="button">
+                        <span class="toggle-marker selected">›</span>
+                        Переключить DEBUG режим
+                    </span>
+                </label>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a class="button"
+                    style="flex: 1; border-bottom-left-radius: var(--elements-border-radius);"
+                    href="/sitemap.xml">Sitemap.xml</a>
+                <a class="button"
+                    style="flex: 1; border-bottom-right-radius: var(--elements-border-radius);"
+                    href="/robots.txt">Robots.txt</a>
+            </div>
+        </div>
+
+        <h2 style="margin-block: 1.5rem 0.5rem;">Страницы</h2>
+        <div class="pages-list">
+            <div class="body">
+                {% for gpage in global.pages.values %}
+                <!-- только для page -->
+                    {% with is_current=page|default:None|is_equal:gpage %}
+                    <a class="button {% if is_current %}current{% endif %} oneline-text{% if not gpage.add_to_header %} dim{% endif %}"
+                        style="text-align: left;"
+                        title="{{ gpage.name }}"
+                        {% if not is_current %}href="{{gpage.get_absolute_url}}"{%endif%}>
+                        {% if is_current %}>{%endif%}
+                        {{ gpage.name }}
+                        <span class="onhover">‹</span>
+                    </a>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="content-container">
+        <header class="breadcrumbs">
+            <!-- Будет генерироваться -->
+            <a class="a-inherit add-sounds" href="/">{{global.pages.index.name}}</a>
+            {% for el in page_info.get_breadcrumbs %}
+                <!-- Также можно через -->
+                <!-- {% if not forloop.last %} → (например) {% endif %} -->
+                <!--           ^^^^^^^^^^^^ -->
+                › <a class="a-inherit add-sounds"
+
+                    {% if not el|is_equal:object %}
+                        href="{{el.get_absolute_url}}"
+                    {% else %}
+                    style="cursor: default; user-select: none;"
+                    {% endif %}
+                >{{el.name}}</a>
+            {% endfor %}
+        </header>
+        {% if object.next_object %}
+            <div class="navigation-bar">
+                <a href="{{object.next_object.get_absolute_url}}">←</a>
+                <a href="{{object.previous_object.get_absolute_url}}">→</a>
+            </div>
+        {% endif %}
+        <main class="hideOnDebugMode">
+            {% block content %}
+            <div style="text-align: center;">
+                <div>Тут пусто. Ага.</div>
+                <div class="dim" style="font-size: 0.75rem;">(наполнение content по умолчанию)</div>
+            </div>
+            <style>
+                main {
+                    justify-content: center;
+                    align-items: center;
+                }
+            </style>
+            {% endblock %}
+        </main>
+        <div class="debug-mode-content-block showOnDebugMode">
+            {% current_context %}
+            <table class="full">
+                <thead>
+                    <tr>
+                        <th>Параметр</th>
+                        <th>Значение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>H1</b></td>
+                        <td>{{ page_info.get_h1 }}</td>
+                    </tr>
+                    <tr>
+                        <td><b>HTML Title</b></td>
+                        <td>{{ page_info.get_html_title }}</td>
+                    </tr>
+                    <tr>
+                        <td><b>HTML Description</b></td>
+                        <td>{{ page_info.get_html_description }}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Image URL</b></td>
+                        <td>
+                            {% if page_info.get_image_url %}
+                                <a href="{{ page_info.get_image_url }}" target="_blank">{{ page_info.get_image_url }}</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>OG Type</b></td>
+                        <td>{{ page_info.og_type }}</td>
+                    </tr>
+                    <tr>
+                        <td><b>OG Title</b></td>
+                        <td>{{ page_info.og_title }}</td>
+                    </tr>
+                    <tr>
+                        <td><b>OG Description</b></td>
+                        <td>{{ page_info.og_description }}</td>
+                    </tr>
+                    <tr>
+                        <td><b>OG Image URL</b></td>
+                        <td>
+                            {% if page_info.og_image_url %}
+                                <a href="{{ page_info.og_image_url }}" target="_blank">{{ page_info.og_image_url }}</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Breadcrumbs</b></td>
+                        <td>
+                            {% with breadcrumbs=page_info.get_breadcrumbs %}
+                                {% if breadcrumbs %}
+                                    {{ breadcrumbs|repr }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><b>Absolute URL</b></td>
+                        <td>
+                            {% if page_info.get_absolute_url %}
+                                <a href="{{ page_info.get_absolute_url }}" target="_blank">{{ page_info.get_absolute_url }}</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+{% if settings.DEBUG_TEMPLATES_SOUNDS_ENABLED %}
+<script>
+    const getUrl = el => `https://github.com/space-wizards/space-station-14/raw/refs/heads/master/Resources/Audio/${el}.ogg`;
+    const hoverSound = new Audio(getUrl("UserInterface/hover"));
+    const clickSound = new Audio(getUrl("UserInterface/click"));
+    const switchSound = new Audio(getUrl("Machines/lightswitch"));
+
+    hoverSound.volume = parseFloat("{{ settings.DEBUG_TEMPLATES_HOVER_SOUND_VOLUME }}");
+    clickSound.volume = parseFloat("{{ settings.DEBUG_TEMPLATES_CLICK_SOUND_VOLUME }}");
+    switchSound.volume = parseFloat("{{ settings.DEBUG_TEMPLATES_SWITCH_SOUND_VOLUME }}");
+
+    document.addEventListener('DOMContentLoaded', function() {
+        requireAddSounds = event => (
+            event.target.closest('.button') ||
+            event.target.closest('button') ||
+            event.target.closest('.add-sounds'));
+        document.addEventListener('click', function(event) {
+            if (event.target.closest('.switch')) {
+                switchSound.currentTime = 0;
+                switchSound.play();
+            } else if (requireAddSounds(event)) {
+                clickSound.play();
+            }
+        });
+        document.addEventListener('mouseover', function(event) {
+            if (requireAddSounds(event)) {
+                hoverSound.currentTime = 0;
+                hoverSound.play();
+            }
+        });
+
+        function updateCtxModeElements() {
+            const isDebugMode = document.getElementById('enableDebugModeCheckbox').checked;
+            const elements = [
+                ...document.querySelectorAll('.hideOnDebugMode'),
+                ...document.querySelectorAll('.showOnDebugMode')
+            ]
+
+            elements.forEach(el => {
+                el.classList.toggle('onActive', isDebugMode);
+                el.classList.toggle('onUnactive', !isDebugMode);
+            });
+        }
+
+        const debugModeCheckbox = document.getElementById('enableDebugModeCheckbox');
+        // Первоначальная настройка
+        updateCtxModeElements();
+        debugModeCheckbox.addEventListener('change', updateCtxModeElements);
+    });
+</script>
+{% endif %}
+</html>

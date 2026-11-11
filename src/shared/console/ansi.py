@@ -1,46 +1,36 @@
 # aka "colorama на минималках"
 
-ESC = '\033['
+ESC = "\033["
 
-BLACK   = '\033[30m'
-RED     = '\033[31m'
-GREEN   = '\033[32m'
-YELLOW  = '\033[33m'
-BLUE    = '\033[34m'
-MAGENTA = '\033[35m'
-CYAN    = '\033[36m'
-WHITE   = '\033[37m'
+BLACK = "\033[30m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+MAGENTA = "\033[35m"
+CYAN = "\033[36m"
+WHITE = "\033[37m"
 
-L_BLACK   = '\033[90m'
-L_RED     = '\033[91m'
-L_GREEN   = '\033[92m'
-L_YELLOW  = '\033[93m'
-L_BLUE    = '\033[94m'
-L_MAGENTA = '\033[95m'
-L_CYAN    = '\033[96m'
-L_WHITE   = '\033[97m'
+L_BLACK = "\033[90m"
+L_RED = "\033[91m"
+L_GREEN = "\033[92m"
+L_YELLOW = "\033[93m"
+L_BLUE = "\033[94m"
+L_MAGENTA = "\033[95m"
+L_CYAN = "\033[96m"
+L_WHITE = "\033[97m"
 
-D_BLACK   = '\033[2;30m'
-D_RED     = '\033[2;31m'
-D_GREEN   = '\033[2;32m'
-D_YELLOW  = '\033[2;33m'
-D_BLUE    = '\033[2;34m'
-D_MAGENTA = '\033[2;35m'
-D_CYAN    = '\033[2;36m'
-D_WHITE   = '\033[2;37m'
+D_BLACK = "\033[2;30m"
+D_RED = "\033[2;31m"
+D_GREEN = "\033[2;32m"
+D_YELLOW = "\033[2;33m"
+D_BLUE = "\033[2;34m"
+D_MAGENTA = "\033[2;35m"
+D_CYAN = "\033[2;36m"
+D_WHITE = "\033[2;37m"
 
-# class EmptyFore: pass
-# for name in dir(Fore):
-#     value = getattr(Fore, name)
+BOLD = "\033[1m"
+ITALIC = "\033[3m"
+UNDERLINE = "\033[4m"
 
-#     if (not isinstance(value, str)
-#         or name.startswith('_')
-#         or not name.isupper()): continue
-
-#     setattr(EmptyFore, name, "")
-
-BOLD      = '\033[1m'
-ITALIC    = '\033[3m'
-UNDERLINE = '\033[4m'
-
-RESET = '\033[0m'
+RESET = "\033[0m"

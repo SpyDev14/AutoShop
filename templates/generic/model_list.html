@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 style="margin: 0;">{{ page_info.get_h1 }}</h1>
+<!-- Селектор контейнера блока list-content -->
+<div class="list content">
+    {% block list-content %}
+        {% include 'components/generic_description_block.html' with object=based_object %}
+    {% endblock %}
+</div>
+<!-- Общеиспользуемый селектор -->
+<div class="list-container grid">
+    {% for obj in object_list %}
+        {% block list-item %}
+            {% include 'components/item_card.html' %}
+        {% endblock %}
+    {% empty %}
+        <span class="dim">Пусто</span>
+    {% endfor %}
+</div>
+<style>
+    main { gap: 1rem; }
+</style>
+{% endblock %}

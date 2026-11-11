@@ -1,0 +1,13 @@
+<div class="formatted-text-block">
+    {% autoescape off %}
+        {% if object.content %}
+            {% render_as_template object.content %}
+        {% elif object.description %}
+            {% render_as_template object.description %}
+        {% elif object.summary %}
+            {% render_as_template object.summary %}
+        {% elif object.short_description %}
+            {% render_as_template object.short_description %}
+        {% endif %}
+    {% endautoescape %}
+</div>
