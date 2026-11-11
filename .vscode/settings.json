@@ -1,0 +1,7 @@
+{
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "editor.insertSpaces": true, // true по умолчанию, но кто-то может предпочитать табы (как я раньше),
+    "editor.rulers": [80, 120], // 80 - желательный максимум, 120 - край (больше нельзя)
+}
