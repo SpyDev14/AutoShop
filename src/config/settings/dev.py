@@ -2,6 +2,7 @@ import sys
 
 from src.config.settings.base import *
 
+
 SECRET_KEY = "SECRET_KEY"
 
 DEBUG = True
@@ -13,4 +14,4 @@ MIDDLEWARE = [
 
 ALLOWED_HOSTS = ["*"]
 
-LOGGING = get_logging_conf(debug=DEBUG and "runserver" in sys.argv)
+LOGGING = get_logging_conf(debug=DEBUG)

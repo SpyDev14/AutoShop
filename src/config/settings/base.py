@@ -9,10 +9,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from environ import Env
 
+import admin_registrar.logging
+
 from src.shared.console.ansi import *
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 Env.read_env(BASE_DIR / ".env")  # парсит .env в os.environ
 env = Env()
@@ -33,6 +35,8 @@ INSTALLED_APPS = [
     # Libs
     # Project
     "src.apps.feedback",
+    # Libs (req. bottom position)
+    "django_cleanup",
 ]
 
 MIDDLEWARE = [
@@ -68,7 +72,7 @@ WSGI_APPLICATION = "src.config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 # env.db() использует DATABASE_URL и поддерживает и postgres, и SQLite
-DATABASES = {"default": env.db()}
+DATABASES = {"default": env.db(default="sqlite:///db.sqlite3")}  # type: ignore[reportArgumentType]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -136,6 +140,7 @@ def get_logging_conf(*, debug: bool) -> dict[str, object]:
                 "style": "{",
             },
             "level-only": {"format": "[{levelname}] {message}", "style": "{"},
+            "AdminRegistrar": admin_registrar.logging.RECOMMENDED_FORMATTER,
         },
         "handlers": {
             "console": {
@@ -150,22 +155,42 @@ def get_logging_conf(*, debug: bool) -> dict[str, object]:
                 "filename": LOGS_DIR / f"logs.log",
             },
             "django-console": {
-                "level": "DEBUG",
+                "level": debug_level,
                 "class": "logging.StreamHandler",
                 "formatter": "django-console",
+            },
+            "AdminRegistrar": {
+                "level": debug_level,
+                "class": "logging.StreamHandler",
+                "formatter": "AdminRegistrar",
             },
         },
         "root": {"handlers": ["console", "file"], "level": debug_level},
         "loggers": {
-            "shared.admin.model_registration": {"handlers": ["AMRegistrator"], "level": "DEBUG", "propagate": False},
-            "django": {"handlers": ["django-console", "file"], "level": "INFO", "propagate": False},
-            # Чтобы не спамил всякой DEBUG ерундой
-            "debug_toolbar.store": {
-                "level": "INFO",
+            "admin_registrar.registrars": {
+                "handlers": ["AdminRegistrar"],
+                "level": debug_level,
+                "propagate": False,
             },
+            "django": {
+                "handlers": ["django-console", "file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            # Чтобы не спамил всякой DEBUG ерундой
+            "debug_toolbar.store": {"level": "INFO"},
         },
     }
 
+
+# MARK: EMail-s
+EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
+CELERY_EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
 
 # MARK: Libs
 SOLO_CACHE = "default"
@@ -187,9 +212,14 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 
 ADMIN_REGISTRAR = {
-    'ADMINS_FOR_MODELS': {
-        'solo.models.SingletonModel': 'solo.admin.SoloAdmin',
+    "ADMINS_FOR_MODELS": {
+        "solo.models.SingletonModel": "solo.admin.SoloAdmin",
     }
 }
 
 # MARK: Project
+DOMAIN = "granfort.ru"
+
+NEW_FEEDBACK_REQUEST_EMAIL_NOTIFICATION_RECIPIENTS = ("vlad.buklovsky@gmail.com",)
+GET_NEW_FEEDBACK_REQUEST_EMAIL_NOTIFICATION_SENDER_EMAIL = lambda domain: f"noreply@{domain}"
+NEW_FEEDBACK_REQUEST_EMAIL_NOTIFICATION_CONTENT_TEMPLATE = "feedback/notification/email.html"

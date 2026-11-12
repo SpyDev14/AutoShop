@@ -1,5 +1,4 @@
-from pathlib import Path
-from typing import Any, Self, Callable
+from typing import Any, Self, Sequence
 import json, logging
 
 from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
@@ -8,16 +7,24 @@ from django.db import models
 
 from src.shared.reflection import typename
 from src.shared.seo.og import OgType
-from src.apps.site import SiteSettings
-from src.shared.models.mixins import DefaultAltTextMixin
-from src.shared.models.fields import ImageAltTextField
+from src.apps.website.models import SiteSettings
 
 
 _logger = logging.getLogger(__name__)
 
 
+class OrderedModel(models.Model):
+    pk: int
+    order = models.PositiveSmallIntegerField(default=0, db_index=True)
+
+    class Meta:
+        abstract = True
+        ordering = ["order"]
+
+
 class UniqueNamedModel(models.Model):
-    name = models.CharField("Название", max_length=120, unique=True)
+    pk: int
+    name = models.CharField("Название", max_length=80, unique=True)
 
     class Meta:
         abstract = True
@@ -27,6 +34,8 @@ class UniqueNamedModel(models.Model):
 
 
 class PagedModel(models.Model):
+    """Базовая модель для всех моделей со своей detail-страницой"""
+
     pk: int
 
     # см. get_absolute_url()
@@ -40,14 +49,18 @@ class PagedModel(models.Model):
         help_text="Указывайте человеко-читаемый текст. По умолчанию также используется для HTML Title и H1.",
     )
     slug = models.SlugField(max_length=128, unique=True)
-    _h1 = models.CharField(
-        "H1 Заголовок", max_length=128, blank=True, help_text="По умолчанию для H1 используется Name."
+    _h1 = models.CharField(  # Названо с _ чтобы не было путаницы с get_h1 (не использовали h1 напрямую)
+        "H1 Заголовок", max_length=128, blank=True, help_text="По умолчанию для H1 используется Name.", name="h1"
     )
-    _html_title = models.CharField(
-        "HTML Title", max_length=128, blank=True, help_text="По умолчанию для HTML Title используется Name."
+    _html_title = models.CharField(  # Названо с _ чтобы не было путаницы
+        "HTML Title",
+        max_length=128,
+        blank=True,
+        help_text="По умолчанию для HTML Title используется Name.",
+        name="html_title",
     )
     add_site_name_to_html_title = models.BooleanField("Добавить название сайта к HTML Title?", default=True)
-    _html_description = models.TextField("HTML Description", blank=True)
+    _html_description = models.TextField("HTML Description", blank=True, name="html_description")
     last_modified_time = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -69,7 +82,9 @@ class PagedModel(models.Model):
     def get_image_url(self) -> str | None:
         """
         Если у модели есть изображение - переопределите этот метод
-        и возвращайте ссылку на него.
+        и возвращайте url ссылку на него.
+
+        По умолчанию пробует взять из `image`.
         """
         FIELD_NAME = "image"
         try:
@@ -93,6 +108,7 @@ class PagedModel(models.Model):
     # Необходимо указать в дочернем классе, но можно оставить по умолчанию
     _OG_TYPE: OgType = OgType.WEBSITE
 
+    # Возможно тоже стоит сделать методами с get
     @property
     def og_type(self):
         return self._OG_TYPE
@@ -111,25 +127,28 @@ class PagedModel(models.Model):
 
     # Под переопределение
     def _get_parent_object(self) -> Self | None:
-        """Возвращает объект, считающийся родительским для этого объекта"""
+        """
+        Возвращает объект, считающийся родительским для этого объекта.
+        Используется в генерации breadcrumbs.
+        """
         return None
 
-    def get_breadcrumbs(self) -> list[Self]:
+    def get_breadcrumbs(self) -> Sequence[Self]:
         """Возвращает "хлебные крошки" для этого объекта, включая сам объект."""
         CACHE_KEY = "_cache_get_breadcrumbs"
         if cache := getattr(self, CACHE_KEY, None):
             return cache
 
         breadcrumbs: list[Self] = []
-        seen_items: set[tuple[models.Model, int]] = set()
+        seen: set[tuple[type[models.Model], int]] = set()
 
-        current = self
+        current: Self | None = self
         while current is not None:
-            if (item := (type(current), current.pk)) in seen_items:
+            if (item := (type(current), current.pk)) in seen:
                 model, pk = item
                 raise ValueError(f"Циклическая последовательность parent объектов (model: {typename(model)}, pk: {pk})")
 
-            seen_items.add(item)
+            seen.add(item)
             breadcrumbs.append(current)
             current = current._get_parent_object()
 
@@ -161,7 +180,7 @@ class PagedModel(models.Model):
         """
         Возвращает HTML структуру с мирокроразметочными элементами.
         """
-        from core.models.general import Page
+        from src.apps.page.models import DynamicPage
 
         microdates: list[dict] = []
 
@@ -178,7 +197,9 @@ class PagedModel(models.Model):
                         "name": item.name,
                         **({"item": item.get_absolute_url()} if item != self else {}),
                     }
-                    for i, item in enumerate(list(Page.objects.filter(slug="index")) + self.get_breadcrumbs())
+                    for i, item in enumerate(
+                        tuple(DynamicPage.objects.filter(slug="index")) + tuple(self.get_breadcrumbs())
+                    )
                 ],
             }
         )

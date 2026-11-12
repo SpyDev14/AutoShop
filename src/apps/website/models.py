@@ -4,7 +4,7 @@ from solo.models import SingletonModel
 
 class SiteSettings(SingletonModel):
     site_name = models.CharField(
-        "Название сайта", max_length=128, default="JBrony Site", help_text="В основном используется в base.html"
+        "Название сайта", max_length=128, default="Гранфорт", help_text="В основном используется в base.html"
     )
     favicon = models.ImageField(blank=True, upload_to="favicon")
     robots_txt_content = models.TextField("Содержимое Robots.txt", blank=True)
@@ -14,7 +14,7 @@ class SiteSettings(SingletonModel):
         help_text="Этот текст будет вставлен в конце &lthead&gt на каждой html-странице сайта",
     )
 
-    class Meta:
+    class Meta:  # type: ignore
         verbose_name = "⚙ | Настройки сайта"
 
     def __str__(self):

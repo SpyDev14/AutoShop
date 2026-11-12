@@ -1,16 +1,20 @@
-from logging import getLogger
-
+from django.contrib.sitemaps.views import sitemap
+from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
-from django.contrib import admin
 from django.urls import path, include
-
-from src.shared.views import handler404 as handler404
 
 from debug_toolbar.toolbar import debug_toolbar_urls
 
+from src.shared.sitemaps import get_sitemaps_for_paged_models
+from src.shared.views import handler404 as handler404
+
+
+_sitemaps = get_sitemaps_for_paged_models()
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("sitemap.xml", sitemap, kwargs={"sitemaps": _sitemaps}),
     *debug_toolbar_urls(),
 ]
 
