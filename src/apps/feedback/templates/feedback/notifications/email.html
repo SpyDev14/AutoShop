@@ -1,0 +1,14 @@
+Поступила новая заявка (<a href="{{request|get_admin_url}}">см. в админ-панели</a>).
+<hr>
+<pre>
+    <b>Город</b>: {{request.city}}
+    <b>Дата</b>:  {{request.created_at}}
+
+    <b>Тел.</b>:  {{request.phone_number}}
+    <b>Имя</b>:   {{request.requestener_name}}
+
+    <b>Интересующий вид защиты бампера</b>: {{request.interest_product_kind}}
+    <b>Интересующая модель автомобиля</b>:  {{request.interest_car|or:"Своя"}}
+    <b>Интересующий материал:</b>           {{request.interest_material|or:"Пока не выбрал"}}
+    <b>Нужна установка под ключ:</b>        {% if request.interest_turnkey_installation %}Да ✅{% else %}Нет ❌{% endif %}
+</pre>

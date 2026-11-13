@@ -6,6 +6,7 @@ from django.urls import reverse, NoReverseMatch
 from django.db import models
 
 from src.shared.reflection import typename
+from src.shared.models.mixins import AnnotatePkMixin
 from src.shared.seo.og import OgType
 from src.apps.website.models import SiteSettings
 
@@ -13,8 +14,7 @@ from src.apps.website.models import SiteSettings
 _logger = logging.getLogger(__name__)
 
 
-class OrderedModel(models.Model):
-    pk: int
+class OrderedModel(AnnotatePkMixin, models.Model):
     order = models.PositiveSmallIntegerField(default=0, db_index=True)
 
     class Meta:
@@ -22,8 +22,7 @@ class OrderedModel(models.Model):
         ordering = ["order"]
 
 
-class UniqueNamedModel(models.Model):
-    pk: int
+class UniqueNamedModel(AnnotatePkMixin, models.Model):
     name = models.CharField("Название", max_length=80, unique=True)
 
     class Meta:
@@ -33,15 +32,13 @@ class UniqueNamedModel(models.Model):
         return self.name
 
 
-class PagedModel(models.Model):
+class PagedModel(AnnotatePkMixin, models.Model):
     """Базовая модель для всех моделей со своей detail-страницой"""
-
-    pk: int
 
     # см. get_absolute_url()
     # Под редкое переопределение в подклассах
-    _url_path_name: str | None = None
-    _url_kwarg_name: str = "slug"
+    _URL_PATH_NAME: str | None = None
+    _URL_KWARG_NAME: str = "slug"
 
     name = models.CharField(
         "Название",
@@ -213,10 +210,10 @@ class PagedModel(models.Model):
 
     def get_absolute_url(self) -> str:
         default_url_name = f"{self._meta.model_name}-detail"
-        url_name = self._url_path_name or default_url_name
+        url_name = self._URL_PATH_NAME or default_url_name
 
         try:
-            return reverse(url_name, kwargs={self._url_kwarg_name: self.slug})
+            return reverse(url_name, kwargs={self._URL_KWARG_NAME: self.slug})
         except NoReverseMatch:
             raise ImproperlyConfigured(
                 "Вы не настроили get_absolute_url()! Настройте, либо переопределите базовый метод."

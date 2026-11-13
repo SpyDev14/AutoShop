@@ -13,7 +13,7 @@ from src.shared.views import handler404 as handler404
 _sitemaps = get_sitemaps_for_paged_models()
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", admin.site.urls, name="admin"),
     path("sitemap.xml", sitemap, kwargs={"sitemaps": _sitemaps}),
     *debug_toolbar_urls(),
 ]

@@ -62,6 +62,10 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+
+            "builtins": [
+                "shared.templatetags/builtins.py",
+            ]
         },
     },
 ]
@@ -218,8 +222,4 @@ ADMIN_REGISTRAR = {
 }
 
 # MARK: Project
-DOMAIN = "granfort.ru"
-
-NEW_FEEDBACK_REQUEST_EMAIL_NOTIFICATION_RECIPIENTS = ("vlad.buklovsky@gmail.com",)
-GET_NEW_FEEDBACK_REQUEST_EMAIL_NOTIFICATION_SENDER_EMAIL = lambda domain: f"noreply@{domain}"
-NEW_FEEDBACK_REQUEST_EMAIL_NOTIFICATION_CONTENT_TEMPLATE = "feedback/notification/email.html"
+MAIN_DOMAIN = "granfort.ru"

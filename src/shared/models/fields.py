@@ -2,7 +2,7 @@ from django.utils.safestring import mark_safe
 from django.core.checks import Error, Info
 from django.db.models import CharField, Model
 
-_NOT_RECOMMENDED_FIELD_NAME_MSG_ID = "core.fields.I001"
+_NOT_RECOMMENDED_FIELD_NAME_MSG_ID = "src.shared.models.fields.W001"
 
 
 # Это поле пережило несколько серьёзных изменений структуры, раньше здесь было св-во вместо метода,
