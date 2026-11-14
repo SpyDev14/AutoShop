@@ -12,7 +12,7 @@ class CompanyInfo(SingletonModel):
     work_time_starts = models.TimeField("Время начала работы", default=time(hour=9))
     work_time_ends = models.TimeField("Время начала работы", default=time(hour=18))
 
-    class Meta: # type: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # type: ignore[reportIncompatibleVariableOverride]
         verbose_name = "📑 | Информация о компании"
 
     def __str__(self):

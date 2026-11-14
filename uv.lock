@@ -20,7 +20,7 @@ wheels = [
 ]
 
 [[package]]
-name = "autoshop"
+name = "auto-shop"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+ruff format
+if [ $? -ne 0 ]; then
+    echo "Коммит отменен."
+    exit 1
+fi

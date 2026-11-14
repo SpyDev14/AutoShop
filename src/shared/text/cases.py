@@ -1,5 +1,6 @@
 import re
 
+
 def camel_to_snake_case(text: str) -> str:
     """
     Преобразует `CamelCase` в `snake_case`<br>
@@ -10,4 +11,4 @@ def camel_to_snake_case(text: str) -> str:
     "_Private__CamelCase" => "_private__camel_case"
     ```
     """
-    return re.sub(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", '_', text).lower()
+    return re.sub(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", text).lower()

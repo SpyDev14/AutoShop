@@ -7,7 +7,7 @@ from src.shared.enums.flags import FlagsMixin
 
 
 class Car(UniqueNamedModel):
-    class Meta: # type: ignore
+    class Meta:  # type: ignore
         verbose_name = "Модель автомобиля"
         verbose_name_plural = "Модели автомобилей"
 
@@ -15,20 +15,21 @@ class Car(UniqueNamedModel):
 class Material(UniqueNamedModel):
     image = models.ImageField("Изображение", upload_to=get_upload_path("material/images"))
 
-    class Meta: # type: ignore
+    class Meta:  # type: ignore
         verbose_name = "Материал"
         verbose_name_plural = "Материалы"
 
 
 class ProductKind(FlagsMixin, models.IntegerChoices):
-    FRONT	= (1 << 0, "Перед")
-    BACK	= (1 << 1, "Зад")
-    BOTH	= (FRONT[0] | BACK[0], "Оба")
+    FRONT = (1 << 0, "Перед")
+    BACK = (1 << 1, "Зад")
+    BOTH = (FRONT[0] | BACK[0], "Оба")
 
 
 class Product(UniqueNamedModel):
     price = models.DecimalField("Цена", decimal_places=5)
-    class Meta: # type: ignore
+
+    class Meta:  # type: ignore
         verbose_name = "Продукт"
         verbose_name_plural = "Продукты"
 

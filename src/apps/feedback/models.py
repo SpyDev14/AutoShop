@@ -17,7 +17,9 @@ class FeedbackRequest(models.Model):
     interest_turnkey_installation = models.BooleanField("Установка под ключ", default=True)
 
     client_is_served = models.BooleanField(
-        "Клиент обслужен", default=False, help_text="Поставьте галочку, когда клиент был обслужен, т.е заявка был обработана."
+        "Клиент обслужен",
+        default=False,
+        help_text="Поставьте галочку, когда клиент был обслужен, т.е заявка был обработана.",
     )
     served_at = models.DateTimeField("Дата закрытия заявки", help_text="Когда было обслужено")
     served_by = models.ForeignKey(User, models.SET_NULL, null=True, verbose_name="Закрыл")
@@ -35,6 +37,7 @@ class FeedbackRequest(models.Model):
 class EmailRecipient(models.Model):
     email = models.EmailField("Эл. адрес", unique=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True, editable=False)
+
 
 class EmailLog(models.Model):
     recipient = models.ForeignKey(EmailRecipient, models.SET_NULL, verbose_name="Получатель", null=True)

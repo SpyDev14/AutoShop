@@ -1,4 +1,3 @@
-
 from enum import Enum, IntEnum, F
 from typing import SupportsInt
 
@@ -26,6 +25,7 @@ def has_flag(value: int, flags: int) -> bool:
     ```
     """
     return (value & flags) == flags
+
 
 class FlagsMixin:
     def has_flag(self: SupportsInt, flags: int):

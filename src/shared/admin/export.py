@@ -56,8 +56,9 @@ def _export_to_excel(
     max_cells_width: int = 64,
     fields: Sequence[str] | None = None,
     verbose_names: Sequence[str | None] | None = None,
-    date_format: str = '%d.%m.%Y %H:%M',
-    formatters: dict[str, Callable[[Any], Any]] | None = None) -> FileResponse:
+    date_format: str = "%d.%m.%Y %H:%M",
+    formatters: dict[str, Callable[[Any], Any]] | None = None,
+) -> FileResponse:
     """
     Экспорт QuerySet в Excel. Возвращает HTTP FileResponse с файлом для скачивания.
     Не будет экспортировать поля один ко многим.
@@ -99,7 +100,7 @@ def _export_to_excel(
         raise ValueError("verbose_names length must match fields")
 
     # MARK: ИНИЦИАЛИЗАЦИЯ
-    model_class: Model = queryset.model # для аннотации
+    model_class: Model = queryset.model  # для аннотации
     model_meta = model_class._meta
     del model_class
 
@@ -117,15 +118,11 @@ def _export_to_excel(
 
     # Названия колонок
     if verbose_names is None:
-        verbose_names = [
-            model_meta.get_field(field_name).verbose_name
-            for field_name in fields
-        ]
+        verbose_names = [model_meta.get_field(field_name).verbose_name for field_name in fields]
     else:
         for i, (field_name, verbose_name) in enumerate(zip(fields, verbose_names)):
             if verbose_name is None:
                 verbose_names[i] = model_meta.get_field(field_name).verbose_name
-
 
     # MARK: ФОРМИРОВАНИЕ ДАННЫХ
     data: list[dict[str, Any]] = []
@@ -141,7 +138,7 @@ def _export_to_excel(
             elif isinstance(value, date):
                 value = value.strftime(date_format)
             elif isinstance(value, bool):
-                value = 'Да' if value else 'Нет'
+                value = "Да" if value else "Нет"
             elif isinstance(value, Model):
                 value = str(value)
             elif isinstance(value, PhoneNumber):
@@ -152,18 +149,13 @@ def _export_to_excel(
 
         data.append(row)
 
-
     # MARK: ГЕНЕРАЦИЯ ФАЙЛА
     data_frame = DataFrame(data)
-    buffer = BytesIO() # В памяти
+    buffer = BytesIO()  # В памяти
     # Также можно сразу писать в HttpResponse, но так удобне
 
-    with ExcelWriter(buffer, engine = 'openpyxl') as writer:
-        data_frame.to_excel(
-            writer,
-            index = False,
-            sheet_name = sheet_name
-        )
+    with ExcelWriter(buffer, engine="openpyxl") as writer:
+        data_frame.to_excel(writer, index=False, sheet_name=sheet_name)
 
         worksheet: Worksheet = writer.sheets[sheet_name]
 
@@ -171,10 +163,7 @@ def _export_to_excel(
             # column_letter - колонка в Excel: A, B, C, D...
             column_letter = column[0].column_letter
 
-            max_cell_width = max(
-                len(str(cell.value)) if cell.value else 0
-                for cell in column[:max_cells_check]
-            )
+            max_cell_width = max(len(str(cell.value)) if cell.value else 0 for cell in column[:max_cells_check])
 
             # К сожалению, по умолчанию стиль расположения текста в
             # ячейках - слева снизу, и исправить это можно только перебором
@@ -182,8 +171,8 @@ def _export_to_excel(
             # придётся проигнорировать страшный вид :^(
             # PS: Но это касательно
             worksheet.column_dimensions[column_letter].width = min(
-                max_cell_width + 2, # (С запасом)
-                max_cells_width # Из параметров
+                max_cell_width + 2,  # (С запасом)
+                max_cells_width,  # Из параметров
             )
 
     # Подготавливаем буффер для чтения: устанавливаем курсор в начало
@@ -191,17 +180,15 @@ def _export_to_excel(
 
     return FileResponse(
         buffer,
-        filename = f"{filename}.xlsx",
-        as_attachment = True,
-        content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        filename=f"{filename}.xlsx",
+        as_attachment=True,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+
 def make_export_to_excel_action(
-        name: str,
-        *,
-        add_date_to_name: bool = False,
-        filename_date_format: str = '%d.%m.%Y',
-        **kwargs):
+    name: str, *, add_date_to_name: bool = False, filename_date_format: str = "%d.%m.%Y", **kwargs
+):
     """Возвращает admin-action функцию, экспортирующую
     и отправляющую обратно записи в excel формате.
 
@@ -221,10 +208,8 @@ def make_export_to_excel_action(
     if add_date_to_name:
         name = f"{name} {timezone.now().strftime(filename_date_format)}"
 
-    @action(description = "Экспортировать в Excel")
+    @action(description="Экспортировать в Excel")
     def admin_action(modeladmin, request, queryset: QuerySet):
-        return _export_to_excel(
-            queryset, name, **kwargs
-        )
+        return _export_to_excel(queryset, name, **kwargs)
 
     return admin_action
